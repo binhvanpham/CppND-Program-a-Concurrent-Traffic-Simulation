@@ -1,5 +1,7 @@
 #include <iostream>
 #include <random>
+#include <cstdlib>
+#include <ctime>
 #include "TrafficLight.h"
 
 /* Implementation of class "MessageQueue" */
@@ -47,6 +49,15 @@ void TrafficLight::simulate()
 }
 */
 
+
+
+
+//  Toggle the traffic light
+//-----------------------------
+void TrafficLight::toggle() {
+    _currentPhase = (_currentPhase==TrafficLightPhase::red)? TrafficLightPhase::green : TrafficLightPhase::red; 
+} 
+
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases() {
 
@@ -54,12 +65,48 @@ void TrafficLight::cycleThroughPhases() {
     // and toggles the current phase of the traffic light between red and green and sends an update method 
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds. 
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles. 
+    srand (static_cast <unsigned> (time(0)));
 
+    // initialize random seed for the random number generator
+    //--------------------------------------------------------
+    srand (static_cast <unsigned> (time(0)));
 
+    // generate a random number between 4 and 6
+    //------------------------------------------
+    double cycleDuration = 4 + static_cast<int> (rand())/(static_cast<int> (RAND_MAX/(7-4)));
 
+/*
+    std::random_device rd;  
+    std::mt19937 eng(rd());
+    std::uniform_int_distribution<> distr(4, 6); // define the range
+    double cycleDuration = distr(eng);
+*/
 
+    //std::cout << "Duration " << cycleDuration << std::endl;
 
+    std::chrono::time_point<std::chrono::system_clock> lastUpdate;
+    lastUpdate = std::chrono::system_clock::now();
 
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      
+        // compute time difference to stop watch
+        //--------------------------------------
+        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        if (timeSinceLastUpdate >= cycleDuration) {
+
+            // toggle light
+            //---------------- 
+            toggle();
+
+            // send phase to message queue
+            //----------------------------
+            TrafficLightPhase tmpPhase = _currentPhase;
+            auto ftr = std::async(std::launch::async,&MessageQueue<TrafficLightPhase>::send,&_msgQ,std::move(tmpPhase));
+            lastUpdate = std::chrono::system_clock::now();
+        }
+    }
+    return 0;
 }
 
 

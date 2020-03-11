@@ -51,7 +51,7 @@ public:
     //---------------------------
     void waitForGreen();
     void simulate();
-
+    void toggle();
 
 private:
 
