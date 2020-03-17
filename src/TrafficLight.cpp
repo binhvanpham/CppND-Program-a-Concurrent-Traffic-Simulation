@@ -6,26 +6,52 @@
 
 /* Implementation of class "MessageQueue" */
 
-/* 
+ 
 template <typename T>
-T MessageQueue<T>::receive()
-{
+T MessageQueue<T>::receive() {
     // FP.5a : The method receive should use std::unique_lock<std::mutex> and _condition.wait() 
     // to wait for and receive new messages and pull them from the queue using move semantics. 
     // The received object should then be returned by the receive function. 
+
+    // Perform queue modification under the lock
+    //-------------------------------------------
+    std::unique_lock<std::mutex uLock(_mutex);
+    _cond.wait(uLock,[this]() {
+        return !_message.empty();
+    });
+
+    // Remove last vector element from queue
+    //---------------------------------------
+    T msg = std::move(_message.back());
+    _message.pop_back();
+
+    return msg;
 }
 
 template <typename T>
-void MessageQueue<T>::send(T &&msg)
-{
+void MessageQueue<T>::send(T &&msg) {
+
     // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex> 
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
+
+    // Simulate some work
+    //---------------------
+    std::this_thread::sleep_for(std::chrono::milliseconds(100);
+
+    // Perform vector modification under the lock
+    //--------------------------------------------
+    std::lock_guard<std::mutex> uLock(_mutex);
+
+    // Add vector to queue
+    _message.push_back(std::move(msg));
+    _cond.notify_one();
+
 }
-*/
+
 
 /* Implementation of class "TrafficLight" */
 
-/* 
+
 TrafficLight::TrafficLight()
 {
     _currentPhase = TrafficLightPhase::red;
@@ -36,13 +62,26 @@ void TrafficLight::waitForGreen()
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
     // runs and repeatedly calls the receive function on the message queue. 
     // Once it receives TrafficLightPhase::green, the method returns.
+   
+    while (true) {
+       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+       TrafficLightPhase lp = mQ.receive();
+       if (lp == TrafficLightPhase::green) {
+           return;
+       }
+    }
+
+
+
+
+
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase()
 {
     return _currentPhase;
 }
-*/
+
 
 void TrafficLight::simulate()
 {
