@@ -15,7 +15,7 @@ T MessageQueue<T>::receive() {
 
     // Perform queue modification under the lock
     //-------------------------------------------
-    std::unique_lock<std::mutex uLock(_mutex);
+    std::unique_lock<std::mutex> uLock(_mutex);
     _cond.wait(uLock,[this]() {
         return !_message.empty();
     });
@@ -36,7 +36,7 @@ void MessageQueue<T>::send(T &&msg) {
 
     // Simulate some work
     //---------------------
-    std::this_thread::sleep_for(std::chrono::milliseconds(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Perform vector modification under the lock
     //--------------------------------------------
@@ -65,7 +65,7 @@ void TrafficLight::waitForGreen()
    
     while (true) {
        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-       TrafficLightPhase lp = mQ.receive();
+       TrafficLightPhase lp = _mQ.receive();
        if (lp == TrafficLightPhase::green) {
            return;
        }
@@ -86,7 +86,7 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 void TrafficLight::simulate()
 {
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class. 
-    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases,this);
+    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases,this));
 }
 
 
@@ -142,12 +142,12 @@ void TrafficLight::cycleThroughPhases() {
 
             // send phase to message queue
             //----------------------------
-            TrafficLightPhase tmpPhase = _currentPhase;
-            auto ftr = std::async(std::launch::async,&MessageQueue<TrafficLightPhase>::send,&_msgQ,std::move(tmpPhase));
+            auto tmpPhase = _currentPhase;
+            auto ftr = std::async(std::launch::async,&MessageQueue<TrafficLightPhase>::send,&_mQ,std::move(tmpPhase));
+            ftr.wait();
             lastUpdate = std::chrono::system_clock::now();
         }
     }
-    return 0;
 }
 
 

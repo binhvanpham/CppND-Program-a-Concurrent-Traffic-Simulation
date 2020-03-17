@@ -3,6 +3,8 @@
 
 #include <mutex>
 #include <deque>
+#include <thread>
+#include <future>
 #include <condition_variable>
 #include "TrafficObject.h"
 
