@@ -44,8 +44,6 @@ private:
 class TrafficLight: public TrafficObject {
 public:
 
-    // constructor / desctructor
-    //---------------------------
     TrafficLight();
 
     // getters / setters

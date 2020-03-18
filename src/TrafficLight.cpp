@@ -34,9 +34,6 @@ void MessageQueue<T>::send(T &&msg) {
     // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex> 
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
 
-    // Simulate some work
-    //---------------------
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Perform vector modification under the lock
     //--------------------------------------------
@@ -64,11 +61,8 @@ void TrafficLight::waitForGreen()
     // Once it receives TrafficLightPhase::green, the method returns.
    
     while (true) {
-       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-       TrafficLightPhase lp = _mQ.receive();
-       if (lp == TrafficLightPhase::green) {
-           return;
-       }
+       while (_mQ.receive() != TrafficLightPhase::green) {}
+       return;
     }
 
 
@@ -114,7 +108,7 @@ void TrafficLight::cycleThroughPhases() {
 
     // generate a random number between 4 and 6
     //------------------------------------------
-    double cycleDuration = 4 + static_cast<int> (rand())/(static_cast<int> (RAND_MAX/(7-4)));
+    int cycleDuration = 4 + static_cast<int> (rand())/(static_cast<int> (RAND_MAX/(7-4)));
 
 /*
     std::random_device rd;  
@@ -142,9 +136,7 @@ void TrafficLight::cycleThroughPhases() {
 
             // send phase to message queue
             //----------------------------
-            auto tmpPhase = _currentPhase;
-            auto ftr = std::async(std::launch::async,&MessageQueue<TrafficLightPhase>::send,&_mQ,std::move(tmpPhase));
-            ftr.wait();
+            std::async(std::launch::async,&MessageQueue<TrafficLightPhase>::send,&_mQ,std::move(_currentPhase));
             lastUpdate = std::chrono::system_clock::now();
         }
     }
